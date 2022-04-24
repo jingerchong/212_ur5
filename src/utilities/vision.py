@@ -2,7 +2,7 @@ import cv2
 import numpy as np
 
 class HoughCircles():
-    def __init__(self, canny = 100, center = 50, min_distance = 20, dp = 1.2, min_radius = 0, max_radius = 60):
+    def __init__(self, canny = 100, center = 40, min_distance = 40, dp = 1.3, min_radius = 10, max_radius = 40):
         self.canny = canny
         self.center = center
         self.min_distance = min_distance
@@ -10,35 +10,49 @@ class HoughCircles():
         self.min_radius = min_radius
         self.max_radius = max_radius
     
-    def get_circles(self, image):
-        resizeIm = cv2.resize(image, (0,0), fx=0.25, fy=0.25)
-        blurIm = cv2.medianBlur(resizeIm,5)
+    def get_circles(self, img, draw = False):
+
+        blurIm = cv2.medianBlur(img,5)
         grayIm = cv2.cvtColor(blurIm,cv2.COLOR_BGR2GRAY)
     
         circles = cv2.HoughCircles(grayIm,cv2.HOUGH_GRADIENT,self.dp,self.min_distance,
                 param1=self.canny,param2=self.center, minRadius=self.min_radius,maxRadius=self.max_radius)
-        if circles is not None:
+        if circles is not None and draw:
             circles = (np.around(circles))
             for i in circles[0,:]:
-                cv2.circle(resizeIm,(i[0],i[1]),i[2],(0,255,0),2)
-                cv2.circle(resizeIm,(i[0],i[1]),2,(0,0,255),3)
-        return circles
+                cv2.circle(img,(int(i[0]),int(i[1])),int(i[2]),(0,255,0),2)
+                cv2.circle(img,(int(i[0]),int(i[1])),2,(0,0,255),3)
+            return circles, img
 
+        return circles
+        
     def set_radius_bounds(self, min_radius, max_radius):
         self.min_radius = min_radius
         self.max_radius = max_radius
 
 
 class MorphOps():
-    def __init__(self, lower_bound_HSV, upper_bound_HSV, kernel = None, iterations = None):
-        self.lower_bound_HSV = lower_bound_HSV
-        self.upper_bound_HSV = upper_bound_HSV
-        self.kernel = np.ones((7,7),np.uint8) if kernel is None else kernel
-        self.iterations = 3 if iterations is None else iterations
+    def __init__(self, HSV_bounds = None, kernel = np.ones((5,5),np.uint8), iterations = 2):
+        self.HSV_bounds = HSV_bounds
+        self.kernel = kernel
+        self.iterations = iterations
+    
+    def set_HSV_bounds(self, HSV_bounds):
+        self.HSV_bounds = HSV_bounds
+
+    def set_iterations(self, iterations):
+        self.iterations = iterations
         
+    def set_kernel(self, kernel):
+        self.kernel = kernel
+
     def mask_HSV(self, image):
         hsv_image = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
-        return cv2.inRange(hsv_image, self.lower_bound_HSV, self.upper_bound_HSV)
+        mask = np.zeros(image.shape[:-1], np.uint8)
+        bound = self.HSV_bounds[0]
+        for bound in self.HSV_bounds: 
+            mask = cv2.bitwise_or(mask, cv2.inRange(hsv_image, bound[0], bound[1]))
+        return mask
 
     def dilate(self, image):
         return cv2.dilate(self.mask_HSV(image), self.kernel,iterations = self.iterations) 
@@ -47,7 +61,7 @@ class MorphOps():
         return cv2.erode(self.mask_HSV(image), self.kernel,iterations = self.iterations)
 
     def open(self, image):
-        return cv2.morphologyEx(self.mask_HSV(image), cv2.MORPH_OPEN, self.kernel,iterations = self.iterations) 
+        return cv2.morphologyEx(self.mask_HSV(image), cv2.MORPH_OPEN, self.kernel, iterations = self.iterations) 
 
     def close(self, image):
-        return cv2.morphologyEx(self.mask_HSV(image), cv2.MORPH_CLOSE, self.kernel,iterations = self.iterations) 
+        return cv2.morphologyEx(self.mask_HSV(image), cv2.MORPH_CLOSE, self.kernel, iterations = self.iterations) 
