@@ -20,14 +20,16 @@ def test_hough(filename):
 
 #test_hough("test1.png")
 
-def test_brick(filename, color):
-    img = cv2.imread(input_filepath+filename)
+def test_brick(filename):
+    img = cv2.imread(input_filepath+"color/"+filename)
+    depth = cv2.imread(input_filepath+"depth/"+filename, cv2.IMREAD_ANYDEPTH)
     img = img[:,int(img.shape[1]/2):]
+    depth = depth[:,int(depth.shape[1]/2):]
     bf = BrickFinder(color_HSV)
-    brick, theta, output = bf.find_brick(img, color, True)
-    cv2.imwrite(output_filepath+"brick "+color+" "+filename, output)
+    brick, theta, output = bf.find_brick(img, depth, True)
+    cv2.imwrite(output_filepath+"brick "+filename, output)
 
-#test_brick("test1.png","b")
+test_brick("frame000000.png")
 
 def test_location(filename):
     for i in range(0,13):

@@ -10,7 +10,7 @@ input_filepath = "src/utilities/test_images_input/"
 image = cv2.imread(input_filepath+'test1.png')
 
 # Create a window
-cv2.namedWindow('image')
+cv2.namedWindow('image', cv2.WINDOW_NORMAL)
 
 # Create trackbars for color change
 # Hue is from 0-179 for Opencv

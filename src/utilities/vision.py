@@ -2,7 +2,7 @@ import cv2
 import numpy as np
 
 class HoughCircles():
-    def __init__(self, canny = 100, center = 40, min_distance = 40, dp = 1.3, min_radius = 10, max_radius = 40):
+    def __init__(self, canny = 100, center = 40, min_distance = 40, dp = 1.15, min_radius = 10, max_radius = 30):
         self.canny = canny
         self.center = center
         self.min_distance = min_distance
@@ -32,7 +32,7 @@ class HoughCircles():
 
 
 class MorphOps():
-    def __init__(self, HSV_bounds = None, kernel = np.ones((5,5),np.uint8), iterations = 2):
+    def __init__(self, HSV_bounds = None, kernel = np.ones((15,15),np.uint8), iterations = 3):
         self.HSV_bounds = HSV_bounds
         self.kernel = kernel
         self.iterations = iterations
@@ -53,6 +53,12 @@ class MorphOps():
         for bound in self.HSV_bounds: 
             mask = cv2.bitwise_or(mask, cv2.inRange(hsv_image, bound[0], bound[1]))
         return mask
+
+    def mask_depth(self, image, depth, depth_range):
+        mask1 = depth > depth_range[0]
+        mask2 = depth < depth_range[1]
+        mask = np.logical_and(mask1, mask2)
+        return image * np.stack([mask, mask, mask], axis=2)
 
     def dilate(self, image):
         return cv2.dilate(self.mask_HSV(image), self.kernel,iterations = self.iterations) 
